@@ -29,7 +29,7 @@
     NSString *fp = [[NSBundle mainBundle] pathForResource:@"biye" ofType:@"mp4"];
     NSFileHandle *fh = [NSFileHandle fileHandleForReadingAtPath:fp];
     NSOperationQueue *queue = [NSOperationQueue new];
-    queue.maxConcurrentOperationCount = 1;
+    queue.maxConcurrentOperationCount = 5;
     
     NSError *error;
     NSDictionary *attr = [[NSFileManager defaultManager] attributesOfItemAtPath:fp error:&error];
@@ -38,15 +38,17 @@
     int defaultPartSize = fileSize / part;
     
     for (int i = 0; i < part; i++) {
-        [fh seekToFileOffset:i * fileSize / 1024];
-        NSData *td = [fh readDataOfLength:defaultPartSize];
-        while (queue.operationCount >= 5) {
+        @autoreleasepool{
+            [fh seekToFileOffset:i * fileSize / 1024];
+            NSData *td = [fh readDataOfLength:defaultPartSize];
+            while (queue.operationCount >= 5) {
+                NSLog(@"操作队列中操作数大于等于5个");
+            }
             
+            [queue addOperationWithBlock:^{
+                NSLog(@"%zi",td.length);
+            }];
         }
-        
-        [queue addOperationWithBlock:^{
-            printf("%zd",td.length);
-        }];
     }
     
     [fh closeFile];
@@ -57,8 +59,9 @@
     NSString *fp = [[NSBundle mainBundle] pathForResource:@"biye" ofType:@"mp4"];
     NSInputStream *is = [NSInputStream inputStreamWithFileAtPath:fp];
     [is open];
+    
     NSOperationQueue *queue = [NSOperationQueue new];
-    queue.maxConcurrentOperationCount = 1;
+    queue.maxConcurrentOperationCount = 5;
     
     NSError *error;
     NSDictionary *attr = [[NSFileManager defaultManager] attributesOfItemAtPath:fp error:&error];
@@ -73,14 +76,14 @@
             
             NSInteger flag = [is read:buff maxLength:defaultPartSize];
             if (flag == -1) {
-                printf("卧槽出错啦");
+                NSLog(@"卧槽出错啦");
             }
             while (queue.operationCount >= 5) {
-                
+                NSLog(@"操作队列中操作数大于等于5个");
             }
             
             [queue addOperationWithBlock:^{
-                printf("%zd",defaultPartSize);
+                NSLog(@"%zi",defaultPartSize);
             }];
         }
         
